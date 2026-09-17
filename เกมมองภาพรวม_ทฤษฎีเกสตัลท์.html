@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เกมมองภาพรวม — ทฤษฎีเกสตัลท์</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fffaf7;color:#30343b;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+.wrap{max-width:760px;margin:auto;padding:22px 16px 40px}
+.hero{text-align:center;padding:8px 0 14px}
+.badge{display:inline-block;background:#dcecf3;border-radius:999px;padding:8px 15px;font-weight:700;font-size:14px}
+h1{font-size:32px;margin:12px 0 5px}
+.subtitle{color:#69707d;margin:0}
+.panel{background:#fff;border:1px solid #e7dfe5;border-radius:24px;padding:22px;margin-top:12px}
+.score{display:flex;justify-content:space-between;gap:10px;background:#f8f5ef;border-radius:15px;padding:11px 14px;font-weight:700;font-size:14px}
+.question{font-size:22px;font-weight:800;line-height:1.45;margin:20px 0 15px}
+.visual{background:#fff;border:2px dashed #d8d0d8;border-radius:18px;padding:18px;text-align:center;margin-bottom:16px}
+.visual svg{max-width:300px;width:100%;height:auto}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font-family:inherit}
+.choice{min-height:54px;border:1px solid #e2dce3;background:#fff;border-radius:15px;padding:10px 12px;font-size:16px;font-weight:700;cursor:pointer}
+.choice:hover{border-color:#6d63a8}
+.choice.correct{background:#e4f0d8;border-color:#a9c995}
+.choice.wrong{background:#f6d7df;border-color:#dfabb9}
+.choice:disabled{cursor:default}
+.feedback{min-height:28px;margin-top:13px;font-weight:700}
+.next,.restart{border:0;border-radius:15px;padding:13px 18px;background:#6d63a8;color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.next{display:none;width:100%;margin-top:10px}
+.next.show{display:block}
+.tip{margin-top:14px;background:#f8f5ef;border-radius:15px;padding:13px;font-size:14px;line-height:1.65}
+.result{text-align:center}.result h2{font-size:28px;margin:8px 0}
+@media(max-width:520px){h1{font-size:27px}.question{font-size:19px}.choices{grid-template-columns:1fr}.panel{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <span class="badge">🧠 เกมการรับรู้ตามแนวคิดเกสตัลท์</span>
+  <h1>มองภาพรวม 👀</h1>
+  <p class="subtitle">ดูสิ่งที่เห็นทั้งหมด แล้วค้นหาความสัมพันธ์ของภาพ</p>
+</header>
+<section class="panel">
+  <div class="score"><span id="round">ข้อ 1 / 6</span><span id="points">คะแนน 0</span></div>
+  <div id="game"></div>
+</section>
+</div>
+<script>
+(() => {
+const questions=[
+ {q:"เมื่อเห็นภาพนี้โดยรวม คุณคิดว่าส่วนที่หายไปควรเป็นอะไร?",art:"banana",a:["กล้วย","แอปเปิล","ใบไม้","ดินสอ"],c:0,w:"การมองภาพรวมช่วยให้เชื่อมโยงส่วนที่เห็นกับสิ่งที่คุ้นเคยได้"},
+ {q:"จุดด้านล่างจัดเป็นกลุ่มได้อย่างไร?",art:"dots",a:["รวมเป็นรูปวงกลม","เป็นเส้นตรงทั้งหมด","เป็นรูปสามเหลี่ยม","ไม่มีความสัมพันธ์"],c:0,w:"การรับรู้มักจัดองค์ประกอบที่สัมพันธ์กันให้เป็นภาพหรือกลุ่มเดียว"},
+ {q:"ภาพบางส่วนนี้ เมื่อมองรวมกันน่าจะเป็นสิ่งใด?",art:"cat",a:["แมว","ปลา","บ้าน","ต้นไม้"],c:0,w:"เกสตัลท์เน้นว่ามนุษย์รับรู้โครงสร้างโดยรวม ไม่ได้มองเพียงชิ้นส่วนแยกกัน"},
+ {q:"สถานการณ์ใดสอดคล้องกับแนวคิด “มองภาพรวมก่อน”?",art:"class",a:["เห็นภาพรวมของปัญหาก่อนแยกวิเคราะห์","จำคำศัพท์ทีละคำโดยไม่เชื่อมโยง","ทำตามคำสั่งโดยไม่คิด","เลือกคำตอบจากการเดา"],c:0,w:"การมองความสัมพันธ์ขององค์ประกอบทั้งหมดช่วยให้เกิดความเข้าใจและการหยั่งเห็น"},
+ {q:"ถ้าขาดส่วนตรงกลาง คุณยังเดาได้จากภาพรวมว่าเป็นอะไร?",art:"house",a:["บ้าน","รถยนต์","หนังสือ","แก้วน้ำ"],c:0,w:"แม้ข้อมูลบางส่วนหายไป สมองสามารถใช้โครงสร้างโดยรวมช่วยตีความสิ่งที่รับรู้"},
+ {q:"ถ้านำแนวคิดนี้ไปใช้กับเด็กปฐมวัย ครูควรทำอย่างไร?",art:"teacher",a:["ให้เด็กสังเกตภาพรวมแล้วชวนเชื่อมโยง","ให้ท่องจำส่วนประกอบทันที","บอกคำตอบก่อนให้เด็กคิด","ให้ดูเฉพาะรายละเอียดเล็ก ๆ"],c:0,w:"การเปิดโอกาสให้เด็กสังเกตภาพรวมและค้นหาความสัมพันธ์สอดคล้องกับแนวคิดการรับรู้ของเกสตัลท์"}
+];
+let i=0,score=0,answered=false;
+const game=document.getElementById("game"),round=document.getElementById("round"),points=document.getElementById("points");
+function art(k){
+if(k==="banana")return `<svg viewBox="0 0 300 160" aria-label="ภาพกล้วยบางส่วน"><path d="M48 103 Q115 42 202 72 Q224 80 237 61" fill="none" stroke="#d4a62b" stroke-width="30" stroke-linecap="round"/><path d="M48 103 Q115 42 202 72" fill="none" stroke="#f4d76b" stroke-width="21" stroke-linecap="round"/><rect x="229" y="49" width="17" height="19" rx="5" fill="#8b6b38"/></svg>`;
+if(k==="dots")return `<svg viewBox="0 0 300 160" aria-label="จุดที่จัดกลุ่ม"><g fill="#555"><circle cx="80" cy="48" r="9"/><circle cx="125" cy="32" r="9"/><circle cx="170" cy="48" r="9"/><circle cx="80" cy="100" r="9"/><circle cx="125" cy="116" r="9"/><circle cx="170" cy="100" r="9"/></g></svg>`;
+if(k==="cat")return `<svg viewBox="0 0 300 160" aria-label="ภาพแมวบางส่วน"><path d="M72 119 L80 58 L104 78 Q150 48 196 78 L220 58 L228 119" fill="none" stroke="#444" stroke-width="8"/><circle cx="120" cy="89" r="5"/><circle cx="180" cy="89" r="5"/><path d="M144 103 Q150 110 156 103" fill="none" stroke="#444" stroke-width="5"/></svg>`;
+if(k==="class")return `<svg viewBox="0 0 300 160" aria-label="ห้องเรียน"><rect x="32" y="30" width="236" height="98" rx="9" fill="#eef3f5" stroke="#68727d" stroke-width="3"/><rect x="85" y="46" width="130" height="42" rx="5" fill="#fff" stroke="#68727d"/><circle cx="62" cy="108" r="14" fill="#f0c9d2"/><circle cx="238" cy="108" r="14" fill="#d8e9f1"/><path d="M135 103h30v25h-30z" fill="#c8dcae"/></svg>`;
+if(k==="house")return `<svg viewBox="0 0 300 160" aria-label="บ้านบางส่วน"><path d="M55 124 V74 L150 25 L245 74 V124 Z" fill="#f3e4d4" stroke="#665b58" stroke-width="6"/><path d="M120 124 V88 H180 V124" fill="#d7e8ef" stroke="#665b58" stroke-width="6"/><path d="M110 52 H190" stroke="#fff" stroke-width="16"/></svg>`;
+return `<svg viewBox="0 0 300 160" aria-label="ครูและเด็ก"><circle cx="92" cy="53" r="22" fill="#f1d0bd"/><path d="M56 124 Q92 80 128 124" fill="#d9c8e9"/><circle cx="205" cy="68" r="18" fill="#f1d0bd"/><path d="M176 128 Q205 88 234 128" fill="#cfe3d5"/><path d="M126 76 H174" stroke="#777" stroke-width="5" stroke-dasharray="8 7"/></svg>`;
+}
+function render(){
+answered=false; const q=questions[i];
+round.textContent=`ข้อ ${i+1} / ${questions.length}`; points.textContent=`คะแนน ${score}`;
+game.innerHTML=`<div class="question">${q.q}</div><div class="visual">${art(q.art)}</div><div class="choices">${q.a.map((x,n)=>`<button class="choice" type="button" data-n="${n}">${x}</button>`).join("")}</div><div class="feedback" aria-live="polite"></div><button class="next" type="button">${i===questions.length-1?"ดูผลคะแนน":"ข้อต่อไป"} →</button><div class="tip">💡 <b>เกร็ดความรู้:</b> ${q.w}</div>`;
+game.querySelectorAll(".choice").forEach(b=>b.addEventListener("click",()=>answer(Number(b.dataset.n))));
+game.querySelector(".next").addEventListener("click",next);
+}
+function answer(n){
+if(answered)return; answered=true; const q=questions[i], bs=[...game.querySelectorAll(".choice")];
+bs.forEach((b,k)=>{b.disabled=true;if(k===q.c)b.classList.add("correct");if(k===n&&n!==q.c)b.classList.add("wrong")});
+if(n===q.c){score++;game.querySelector(".feedback").textContent="✓ ถูกต้อง! คุณกำลังใช้การมองภาพรวม";}
+else game.querySelector(".feedback").textContent="ยังไม่ใช่ ลองสังเกตความสัมพันธ์ขององค์ประกอบทั้งหมด";
+points.textContent=`คะแนน ${score}`; game.querySelector(".next").classList.add("show");
+}
+function next(){
+if(i<questions.length-1){i++;render();return}
+game.innerHTML=`<div class="result"><div style="font-size:48px">🎉</div><h2>จบเกมแล้ว!</h2><p>คุณได้ <b>${score} / ${questions.length}</b> คะแนน</p><div class="tip"><b>สรุป:</b> ทฤษฎีเกสตัลท์ให้ความสำคัญกับการรับรู้ “ภาพรวม” และความสัมพันธ์ของส่วนต่าง ๆ ซึ่งช่วยให้ผู้เรียนเข้าใจสิ่งที่กำลังเรียนรู้และเกิดการหยั่งเห็น</div><br><button class="restart" type="button">เล่นอีกครั้ง</button></div>`;
+game.querySelector(".restart").addEventListener("click",()=>{i=0;score=0;render()});
+}
+render();
+})();
+</script>
+</body>
+</html>
